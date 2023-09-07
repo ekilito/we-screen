@@ -1,27 +1,50 @@
 <script setup>
 
-import { ref ,onMounted } from 'vue'
+import {  onMounted } from 'vue'
 
-import { getParkInfoAPI } from '@/apis/park.js'
-import * as echarts from 'echarts'
+// import * as echarts from 'echarts'
+
+/**
+ 2D图表
+   1. 以npm方法把三方图表库安装到本地项目中
+   2. 看官方的demo样例来实现一个简单的图表渲染
+      1. 引入echarts
+      2. 准备一个渲染的节点 （宽高可用的dom节点）
+      3. 使用init进行图表的实例化
+      4. 按照业务的需求准备图表参数（使用后端数据替换掉静态数据）
+      5. 调用图表的setOption方法传入参数完成图表的渲染
+      重点：初始化操作都必须放到mounted钩子函数中去做
+
+  小坑：图表的渲染函数写到了mounted钩子里面 所以响应式数据哪怕已经发生变化了
+        但是图表只会在首次渲染的时候去读数据， 这个时候读到是什么就是什么
+        并不会随着数据的变化而重新渲染
+
+  模板之所以可用用可选链解决问题  新数据返回之后 再次渲染
+  模板本身会和响应式数据发生关联  一旦依赖的响应式数据发生变化
+  整个模板会再次读取数据使用新数据再次渲染
+ */
 
 // 获取园区概括数据
-const parkInfo = ref({})
-
-const getParkInfo = async () => {
-  // 1. 调用接口
-  // 2. 覆盖响应式数据
-  const res = await getParkInfoAPI()
-  parkInfo.value = res.data
-}
-
-
+// const parkInfo = ref({})
+// 
+// const getParkInfo = async () => {
+//   // 1. 调用接口
+//   // 2. 覆盖响应式数据
+//   const res = await getParkInfoAPI()
+//   parkInfo.value = res.data
+// }
+import { useParkInfo } from './composables/useParkInfo'
+import { useInitBarChart} from './composables/useInitBarChart'
+import { useInitPieChart } from './composables/useInitPieChart'
+const { parkInfo, getParkInfo } = useParkInfo()
+const {initBarChart , barChart} =  useInitBarChart(parkInfo)
+const { pieChart, initPieChart } = useInitPieChart(parkInfo)
 
 
 // 渲染年度收入分析图表
 // echats渲染流程： 1. 实例化 2. 准备配置参数 3. 实例.setOption(参数)
 // 1. 获取要渲染的节点位置
-const barChart = ref(null)
+/* const barChart = ref(null)
 // 2. 初始化图表实例（前置要求 必须dom是可用状态 barChart成功拿到了dom元素才可以 - mounted中做初始化）
 function initBarChart () {
   const myBarChart = echarts.init(barChart.value)
@@ -90,12 +113,64 @@ function initBarChart () {
   }
   // 3. 渲染图表
   barOptions && myBarChart.setOption(barOptions)
-}
+} */
+
+// 渲染园区产业分布图表
+/* const pieChart = ref(null)
+
+const initPieChart = () => {
+
+  // 实例化图表
+  const myPieChart = echarts.init(pieChart.value)
+
+  const { parkIndustry } = parkInfo.value
+  // 准备参数
+  const pieOption = {
+    color: [
+      '#00B2FF', '#2CF2FF', '#892CFF', '#FF624D', '#FFCF54', '#86ECA2'],
+    legend: {
+      itemGap: 20,
+      bottom: '0',
+      icon: 'rect',
+      itemHeight: 10, // 图例icon高度
+      itemWidth: 10, // 图例icon宽度
+      textStyle: {
+        color: '#c6d1db',
+      },
+    },
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [
+      {
+        name: '园区产业分析',
+        type: 'pie',
+        radius: ['55%', '60%'], // 设置内圈与外圈的半径使其呈现为环形
+        center: ['50%', '40%'], // 圆心位置， 用于调整整个图的位置
+        tooltip: {
+          trigger: 'item',
+          formatter: (params) => {
+            return `${params.seriesName}</br><div style='display:flex;justify-content: space-between;'><div>${params.marker}${params.name}</div><div>${params.percent}%</div></div>`
+          }
+        },
+        label: {
+          show: false,
+          position: 'center',
+        },
+        data: parkIndustry,
+      },
+    ],
+
+  }
+
+  pieOption && myPieChart.setOption(pieOption)
+} */
 
 onMounted(async() => {
   // 保证图表依赖的数据已经完全返回  在做图标的初始化
   await getParkInfo()
   initBarChart()
+  initPieChart()
 })
 
 </script>
@@ -172,6 +247,13 @@ onMounted(async() => {
     </div>
     <div class="bar-chart" ref="barChart"></div>
   </div>
+    <!-- 园区产业分布 -->
+<div class="section-three">
+  <img class="img-header"
+    src="https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/smartPark/%E5%A4%A7%E5%B1%8F%E5%88%87%E5%9B%BE/%E5%9B%AD%E5%8C%BA%E4%BA%A7%E4%B8%9A%E5%88%86%E5%B8%83%402x.png"
+    alt="" />
+  <div class="pie-chart" ref="pieChart"></div>
+</div>
   </div>
 </template>
 
@@ -256,6 +338,18 @@ onMounted(async() => {
     .bar-chart {
       width: 100%;
       height: calc(100% - 90px);
+    }
+  }
+
+  .section-three {
+    flex-basis: 40%;
+
+    .pie-chart {
+      position: relative;
+      margin: 0 auto;
+      padding-bottom: 20px;
+      width: 80%;
+      height: calc(100% - 40px);
     }
   }
 </style>
