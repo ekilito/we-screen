@@ -1,8 +1,9 @@
 <script setup>
 
-import { ref  } from 'vue'
+import { ref ,onMounted } from 'vue'
 
 import { getParkInfoAPI } from '@/apis/park.js'
+import * as echarts from 'echarts'
 
 // 获取园区概括数据
 const parkInfo = ref({})
@@ -11,13 +12,91 @@ const getParkInfo = async () => {
   // 1. 调用接口
   // 2. 覆盖响应式数据
   const res = await getParkInfoAPI()
-    parkInfo.value = res.data
+  parkInfo.value = res.data
 }
 
 
-  getParkInfo()
 
 
+// 渲染年度收入分析图表
+// echats渲染流程： 1. 实例化 2. 准备配置参数 3. 实例.setOption(参数)
+// 1. 获取要渲染的节点位置
+const barChart = ref(null)
+// 2. 初始化图表实例（前置要求 必须dom是可用状态 barChart成功拿到了dom元素才可以 - mounted中做初始化）
+function initBarChart () {
+  const myBarChart = echarts.init(barChart.value)
+
+  // 1. 解构图表数据
+    const { parkIncome } = parkInfo.value
+  // 2. 准备options数据
+  const barOptions = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow',
+      },
+    },
+    grid: {
+      // 让图表占满容器
+      top: '10px',
+      left: '0px',
+      right: '0px',
+      bottom: '0px',
+      containLabel: true,
+    },
+    xAxis: [
+      {
+        type: 'category',
+        axisTick: {
+          alignWithLabel: true,
+          show: false,
+        },
+        data: parkIncome?.xMonth,
+      },
+    ],
+    yAxis: [
+      {
+        type: 'value',
+        splitLine: {
+          show: false,
+        },
+      },
+    ],
+    series: [
+      {
+        name: '园区年度收入',
+        type: 'bar',
+        barWidth: '10px',
+        data: parkIncome?.yIncome.map((item, index) => {
+          const color =
+            index % 2 === 0
+            // 偶数行颜色
+              ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0.23, color: '#74c0f8' },
+                { offset: 1, color: 'rgba(116,192,248,0.00)' },
+              ])
+              // 基数行颜色
+              : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0.23, color: '#ff7152' },
+                { offset: 1, color: 'rgba(255,113,82,0.00)' },
+              ])
+          return { value: item, itemStyle: { color } }
+        }),
+      },
+    ],
+    textStyle: {
+      color: '#B4C0CC',
+    },
+  }
+  // 3. 渲染图表
+  barOptions && myBarChart.setOption(barOptions)
+}
+
+onMounted(async() => {
+  // 保证图表依赖的数据已经完全返回  在做图标的初始化
+  await getParkInfo()
+  initBarChart()
+})
 
 </script>
 
@@ -78,10 +157,25 @@ const getParkInfo = async () => {
         </div>
       </div>
     </div>
+     <!-- 园区年度收入分析 -->
+  <div class="section-two">
+    <img class="img-header"
+      src="https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/smartPark/%E5%A4%A7%E5%B1%8F%E5%88%87%E5%9B%BE/%E5%9B%AD%E5%8C%BA%E5%B9%B4%E5%BA%A6%E6%94%B6%E5%85%A5%E5%88%86%E6%9E%90%402x.png"
+      alt="" />
+    <div class="bar-chart-titile">
+      <span>单位：元</span>
+      <div>
+        <span class="bar-icon blue-bar-icon"></span>
+        <span class="bar-icon red-bar-icon"></span>
+        收入情况
+      </div>
+    </div>
+    <div class="bar-chart" ref="barChart"></div>
+  </div>
   </div>
 </template>
 
-<style>
+<style scoped lang="scss">
  .all-charts {
     position: absolute;
     top: 0;
@@ -152,6 +246,16 @@ const getParkInfo = async () => {
           margin-top: 8px;
         }
       }
+    }
+  }
+
+  .section-two {
+    flex-basis: 35%;
+    margin-top: 50px;
+
+    .bar-chart {
+      width: 100%;
+      height: calc(100% - 90px);
     }
   }
 </style>
