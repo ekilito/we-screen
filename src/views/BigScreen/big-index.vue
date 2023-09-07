@@ -33,9 +33,9 @@ import {  onMounted } from 'vue'
 //   const res = await getParkInfoAPI()
 //   parkInfo.value = res.data
 // }
-import { useParkInfo } from './composables/useParkInfo'
-import { useInitBarChart} from './composables/useInitBarChart'
-import { useInitPieChart } from './composables/useInitPieChart'
+import { useParkInfo  , useInitBarChart ,  useInitPieChart} from './composables'  // 通过 index中转 统一导入进来
+// import { useInitBarChart} from './composables/useInitBarChart'
+// import { useInitPieChart } from './composables/useInitPieChart'
 const { parkInfo, getParkInfo } = useParkInfo()
 const {initBarChart , barChart} =  useInitBarChart(parkInfo)
 const { pieChart, initPieChart } = useInitPieChart(parkInfo)
