@@ -1,8 +1,14 @@
 <script setup>
 
-import {  onMounted } from 'vue'
+import { ref,   onMounted } from 'vue'
 
 // import * as echarts from 'echarts'
+
+// 导入模型解析构造函数
+import { Application } from '@splinetool/runtime'
+
+// 导入loading加载组件
+import LoadingComponent from '@/components/LoadingComponent.vue'
 
 /**
  2D图表
@@ -166,11 +172,35 @@ const initPieChart = () => {
   pieOption && myPieChart.setOption(pieOption)
 } */
 
+// 渲染3d模型
+// 1. 下载一个3d解析器
+// 2. 实例解析器  调用load方法加载并解析3d模型
+// 初始化3d模型
+const ref3d = ref(null)
+const showLoading = ref(false)  // 控制loading组件的显示与隐藏
+const init3dModel = () => {
+   // 开启loading 
+   showLoading.value = true
+  // 1. 实例化解析器实例
+  let spline = new Application(ref3d.value)
+  // 2. 拉取渲染模型  （拉取模型并且渲染到指定的节点位置）
+  spline.load('https://fe-hmzs.itheima.net/scene.splinecode').then(() => {
+    // 提示用户  打印操作
+    showLoading.value = false  // 加载完毕之后关闭loading
+    console.log('3D模型加载并渲染完毕')
+     // 模型渲染完毕之后后续的逻辑操作
+    // 3. 拉取资源之后.then方法中可以做后续的逻辑操作
+  })
+}
+
+
+
 onMounted(async() => {
   // 保证图表依赖的数据已经完全返回  在做图标的初始化
   await getParkInfo()
   initBarChart()
   initPieChart()
+  init3dModel()
 })
 
 </script>
@@ -248,12 +278,21 @@ onMounted(async() => {
     <div class="bar-chart" ref="barChart"></div>
   </div>
     <!-- 园区产业分布 -->
-<div class="section-three">
+  <div class="section-three">
   <img class="img-header"
     src="https://yjy-teach-oss.oss-cn-beijing.aliyuncs.com/smartPark/%E5%A4%A7%E5%B1%8F%E5%88%87%E5%9B%BE/%E5%9B%AD%E5%8C%BA%E4%BA%A7%E4%B8%9A%E5%88%86%E5%B8%83%402x.png"
     alt="" />
   <div class="pie-chart" ref="pieChart"></div>
-</div>
+  </div>
+  </div>
+  <div class="model-container">
+    <!-- 
+      模型渲染完毕之前显示loading   完毕之后显示3d模型  条件渲染  v-if
+
+     -->
+     <LoadingComponent  :loading="showLoading"/>
+    <!-- 准备3D渲染节点 -->
+    <canvas class="canvas-3d" ref="ref3d" />
   </div>
 </template>
 
@@ -352,4 +391,11 @@ onMounted(async() => {
       height: calc(100% - 40px);
     }
   }
+
+  .model-container {
+  height: 100%;
+  background-color: black;
+  width: 100%;
+  flex-shrink: 0;
+}
 </style>
