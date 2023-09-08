@@ -10,6 +10,9 @@ import { Application } from '@splinetool/runtime'
 // 导入loading加载组件
 import LoadingComponent from '@/components/LoadingComponent.vue'
 
+// 导入大屏适配的插件
+import VScaleScreen from 'v-scale-screen'
+
 /**
  2D图表
    1. 以npm方法把三方图表库安装到本地项目中
@@ -207,6 +210,7 @@ onMounted(async() => {
 
 
 <template>
+  <VScaleScreen width="1920" height="1080">
   <div class="all-charts">
     <!-- 园区概况 -->
     <div class="section-one">
@@ -294,6 +298,7 @@ onMounted(async() => {
     <!-- 准备3D渲染节点 -->
     <canvas class="canvas-3d" ref="ref3d" />
   </div>
+</VScaleScreen>
 </template>
 
 <style scoped lang="scss">
