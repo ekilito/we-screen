@@ -1,11 +1,32 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
 
 import './styles/common.scss'
 
-const app = createApp(App)
+// 使用乾坤渲染
+renderWithQiankun({
+    // 挂载时
+    mount(props) {
+        console.log('子应用完全挂载了mount')
+        render(props)
+    },
+    bootstrap() {
+        console.log('bootstrap')
+    },
+    unmount(props) {
+        console.log('unmount', props)
+    },
+})
 
-app.use(router) // Vue.use(router) 注册插件  注册路由
+if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    render({})
+}
 
-app.mount('#app')
+function render(props = {}) {
+    const { container } = props
+    const app = createApp(App)
+    app.use(router)
+    app.mount(container ? container.querySelector("#app") : "#app")
+}
