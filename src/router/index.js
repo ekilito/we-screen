@@ -8,8 +8,7 @@ import BigScreen from '../views/BigScreen/big-index.vue'
 
 const router = createRouter({
     // 指定当前的路由模式为history模式的路由
-    history: createWebHistory(
-        import.meta.env.BASE_URL),
+    history: createWebHistory(), // 置空
     routes: [{
             path: '/',
             name: 'home',
